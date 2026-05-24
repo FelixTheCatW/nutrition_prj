@@ -1,6 +1,5 @@
 import curses
 from pandas import DataFrame
-from cli.menu import MENU_ITEMS, MENU_DESC
 from cli.screen_writer import ScreenWriter, init_colors
 from cli.user_popup import select_user_popup
 from core.Person import Person

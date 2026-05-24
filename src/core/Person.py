@@ -9,7 +9,7 @@ from src.core.registries import GOALS, ACTIVITY_LEVELS, ACTIVITY_FACTORS
 
 @dataclass
 class Person:
-    user_id: int
+    id: int
     name: str
     activity_level: str
     height_cm: int
@@ -25,8 +25,8 @@ class Person:
     target_protein_g: float = field(init=False, default=0.0)
     tdee: float = field(init=False, default=0.0)
 
-    def __init__(self, user_id, name: str, gender: str, age, height_cm, weight_kg, goal, activity_level, loca, city):
-        self.user_id = user_id
+    def __init__(self, id, name: str, gender: str, age, height_cm, weight_kg, goal, activity_level, loca, city):
+        self.id = id
         self.name = name
         self.gender = gender
         self.age = age
@@ -38,7 +38,7 @@ class Person:
         self.city = city
 
 
-def random_person(user_id: int, locale: str) -> Person:
+def random_person(id: int, locale: str) -> Person:
     fake = Faker(locale)
     gender = random.choice(['мужской', 'женский'])
     if gender == 'мужской':
@@ -47,17 +47,18 @@ def random_person(user_id: int, locale: str) -> Person:
     else:
         weight = round(random.uniform(50, 100), 1)
         name = fake.name_female()
-    person = Person(user_id=user_id,
-                    name=name,
-                    age=random.randint(18, 70),
-                    gender=gender,
-                    height_cm=random.randint(150, 195),
-                    weight_kg=weight,
-                    goal=random.choice(list(GOALS.values())),
-                    activity_level=random.choice(list(ACTIVITY_LEVELS.values())),
-                    loca=locale,
-                    city=fake.city()
-                    )
+    person = Person(
+        user_id=id,
+        name=name,
+        age=random.randint(18, 70),
+        gender=gender,
+        height_cm=random.randint(150, 195),
+        weight_kg=weight,
+        goal=random.choice(list(GOALS.values())),
+        activity_level=random.choice(list(ACTIVITY_LEVELS.values())),
+        loca=locale,
+        city=fake.city(),
+    )
     person.bmr = calculate_bmr(person.weight_kg, person.height_cm, person.age, person.gender)
     person.tdee = calculate_tdee(person.bmr, person.activity_level)
     person.target_cal_per_day = get_target_calories(person.tdee, person.goal)

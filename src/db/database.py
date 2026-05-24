@@ -6,7 +6,7 @@ class Database:
     _connection = None
 
     @classmethod
-    def connect(cls, db_path="nutrition.db"):
+    def connect(cls, db_path="../../data/nutrition.db"):
         if cls._connection is None:
             cls._connection = sqlite3.connect(db_path)
             cls._connection.row_factory = sqlite3.Row
@@ -51,6 +51,7 @@ class Database:
         data_dict = cls._obj_to_dict(obj, exclude=(key,))
         if not data_dict:
             raise ValueError("Нет данных для обновления")
+        
         set_clause = ",".join([f"{k}=?" for k in data_dict])
         values = list(data_dict.values()) + [getattr(obj, key)]
         query = f"UPDATE {table_name} SET {set_clause} WHERE {key}=?"

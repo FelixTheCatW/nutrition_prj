@@ -9,13 +9,18 @@ def generate_persons(quantity: int) -> list[Person]:
 
 
 def generate_day_nutrition(person: Person):
-    return [generate_meal_ext(person.loca, meal_t, person.tdee, person.goal) for meal_t in MEAL_TYPES]
+    return [
+        generate_meal_ext(person.loca, meal_t, person.tdee, person.goal) for meal_t in MEAL_TYPES
+    ]
 
 
 def generate_data():
     persons = [random_person(index, loca) for index, loca in enumerate(LOCALE_MAP.values())]
     for person in persons:
-        meals = [generate_meal_ext(person.loca, meal_t, person.tdee, person.goal) for meal_t in MEAL_TYPES]
+        meals = [
+            generate_meal_ext(person.loca, meal_t, person.tdee, person.goal)
+            for meal_t in MEAL_TYPES
+        ]
         yield person, meals
 
 
@@ -42,14 +47,16 @@ def generate_meal_ext(locale: str, meal_t: str, target_calories: float, user_goa
         servings = get_servings(kcal, user_goal)
         kcal_total = kcal * servings
         if kcal_total <= remaining_kcal * 1.3:  # допустимый ночной дожор
-            chosen_dishes.append({
-                "product": name,
-                "servings": servings,
-                "calories": round(kcal * servings, 1),
-                "protein_g": round(prot * servings, 1),
-                "fat_g": round(fat * servings, 1),
-                "carbs_g": round(carbs * servings, 1)
-            })
+            chosen_dishes.append(
+                {
+                    "product": name,
+                    "servings": servings,
+                    "calories": round(kcal * servings, 1),
+                    "protein_g": round(prot * servings, 1),
+                    "fat_g": round(fat * servings, 1),
+                    "carbs_g": round(carbs * servings, 1),
+                }
+            )
             remaining_kcal -= kcal_total
         else:
             break
@@ -76,9 +83,9 @@ def generate_time(meal_t: str) -> str:
 
 def get_servings(calories_per_serving, goal):
     base = 1
-    if goal == 'weight_loss':
+    if goal == "weight_loss":
         base = random.choice([0.5, 0.8, 1.0])
-    elif goal == 'muscle_gain':
+    elif goal == "muscle_gain":
         base = random.choice([1.0, 1.2, 1.5])
     # округлите до 0.5
     max_servings = 2 if calories_per_serving > 300 else 3
@@ -99,5 +106,5 @@ def generate_meal(locale: str) -> dict:
         "calories": val[0],
         "protein_g": val[1],
         "fat_g": val[2],
-        "carbs_g": val[3]
+        "carbs_g": val[3],
     }
