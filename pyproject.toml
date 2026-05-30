@@ -24,6 +24,8 @@ dev = [
     "ruff>=0.1",
     "black",
     "mypy",
+    "psycopg2-binary",
+    "dotenv",
 ]
 
 [tool.ruff]

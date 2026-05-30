@@ -1,58 +1,93 @@
-import sqlite3
-from src.db.db_error_handler import db_error_handler
+import os
+import logging
+from contextlib import contextmanager
+from psycopg2 import pool, Error as PGError
+from psycopg2.extras import RealDictCursor
+
+logger = logging.getLogger(__name__)
 
 
 class Database:
-    _connection = None
+    _pool = None
 
     @classmethod
-    def connect(cls, db_path="../../data/nutrition.db"):
-        if cls._connection is None:
-            cls._connection = sqlite3.connect(db_path)
-            cls._connection.row_factory = sqlite3.Row
-        return cls._connection
+    def initialize(cls, config: dict):
+        """Вызвать один раз при старте приложения."""
+        if cls._pool is None:
+            cls._pool = pool.SimpleConnectionPool(
+                minconn=config.get("min_conn", 1),
+                maxconn=config.get("max_conn", 10),
+                dbname=config["dbname"],
+                user=config["user"],
+                password=config["password"],
+                host=config["host"],
+                port=config["port"],
+            )
 
     @classmethod
-    @db_error_handler()
-    def execute(cls, query, params=()):
-        cursor = cls._connection.execute(query, params)
-        cls._connection.commit()
-        return cursor
+    @contextmanager
+    def get_connection(cls):
+        """Получить соединение из пула (автоматически возвращает в пул)."""
+        conn = cls._pool.getconn()
+        try:
+            yield conn
+        finally:
+            cls._pool.putconn(conn)
 
     @classmethod
-    def fetchall(cls, query, params=()):
-        return cls.execute(query, params).fetchall()
+    @contextmanager
+    def cursor(cls, commit=False):
+        """Контекстный менеджер для курсора с автоматическим commit/rollback."""
+        with cls.get_connection() as conn:
+            cursor = conn.cursor(cursor_factory=RealDictCursor)
+            try:
+                yield cursor
+                if commit:
+                    conn.commit()
+            except PGError as e:
+                conn.rollback()
+                logger.error(f"DB error: {e}")
+                raise
+            finally:
+                cursor.close()
 
     @classmethod
-    def close(cls):
-        if cls._connection:
-            cls._connection.close()
-            cls._connection = None
-
-    @staticmethod
-    def _obj_to_dict(obj, exclude=("id",)):
-        return {k: v for k, v in vars(obj).items() if k not in exclude and v is not None}
+    def execute(cls, query, params=None, commit=True):
+        """Простое выполнение запроса (без выборки)."""
+        with cls.cursor(commit=commit) as cur:
+            cur.execute(query, params)
+            return cur.rowcount
 
     @classmethod
-    def insert_object(cls, obj, table_name):
-        # Используем _obj_to_dict, чтобы получить словарь
-        data_dict = cls._obj_to_dict(obj)
-        if not data_dict:
-            raise ValueError("Нет данных для вставки")
-
-        columns = ",".join(data_dict.keys())
-        placeholders = ",".join(["?"] * len(data_dict))
-        query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
-        cursor = cls.execute(query, list(data_dict.values()))
-        return cursor.lastrowid
+    def fetch_one(cls, query, params=None):
+        """Вернуть одну запись (словарь) или None."""
+        with cls.cursor(commit=False) as cursor:
+            cursor.execute(query, params)
+            return cursor.fetchone()
 
     @classmethod
-    def update_object(cls, obj, table_name, key="id"):
-        data_dict = cls._obj_to_dict(obj, exclude=(key,))
-        if not data_dict:
-            raise ValueError("Нет данных для обновления")
-        
-        set_clause = ",".join([f"{k}=?" for k in data_dict])
-        values = list(data_dict.values()) + [getattr(obj, key)]
-        query = f"UPDATE {table_name} SET {set_clause} WHERE {key}=?"
-        return cls.execute(query, values).rowcount
+    def fetch_all(cls, query, params=None):
+        """Вернуть список записей (словарей)."""
+        with cls.cursor(commit=False) as cur:
+            cur.execute(query, params)
+            return cur.fetchall()
+
+    @classmethod
+    def insert(cls, table, data: dict, returning="id"):
+        """Вставка словаря и возврат ID."""
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders}) RETURNING {returning}"
+        with cls.cursor(commit=True) as cur:
+            cur.execute(query, list(data.values()))
+            return cur.fetchone()[returning]
+
+    @classmethod
+    def update(cls, table, data: dict, where: str, where_params=None):
+        """Обновление по условию."""
+        set_clause = ", ".join([f"{k}=%s" for k in data.keys()])
+        params = list(data.values())
+        if where_params:
+            params.extend(where_params)
+        query = f"UPDATE {table} SET {set_clause} WHERE {where}"
+        return cls.execute(query, params, commit=True)

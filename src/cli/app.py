@@ -5,6 +5,8 @@ from cli.user_popup import select_user_popup
 from core.Person import Person
 from core.reports import *
 from cli.menu import menu_options
+from src.db.database import Database
+from src.db.db_config import DBConfig
 
 TOP_LEFT_SCR: ScreenWriter
 TOP_RIGHT_SCR: ScreenWriter
@@ -90,11 +92,14 @@ def generate_report_for_item(item_name):
 
 
 def main():
-
     global Nutrition_Data, Users_Data
     Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
+    
+    DBConfig.load_from_env()
+    
+    Database.initialize(DBConfig.as_dict())
+    
     curses.wrapper(main_curses)
-
 
 if __name__ == "__main__":
     main()
