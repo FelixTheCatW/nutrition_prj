@@ -93,7 +93,7 @@ def generate_report_for_item(item_name):
 
 def main():
     global Nutrition_Data, Users_Data
-    Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
+    # Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
     
     DBConfig.load_from_env()
     
