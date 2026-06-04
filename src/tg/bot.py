@@ -9,7 +9,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Импортируем наши модули
-from core.reports import (
+from src.core.reports import (
     load_data,
     get_user_list,
     personal_statistics,

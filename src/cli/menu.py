@@ -1,6 +1,6 @@
 # src/cli/menu.py
 
-from core.reports import (
+from src.core.reports import (
     personal_statistics,
     macro_analysis,
     top_frequent_dishes,

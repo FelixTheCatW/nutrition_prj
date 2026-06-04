@@ -1,10 +1,10 @@
 import curses
 from pandas import DataFrame
-from cli.screen_writer import ScreenWriter, init_colors
-from cli.user_popup import select_user_popup
-from core.Person import Person
-from core.reports import *
-from cli.menu import menu_options
+from src.cli.screen_writer import ScreenWriter, init_colors
+from src.cli.user_popup import select_user_popup
+from src.core.person import Person
+from src.core.reports import *
+from src.cli.menu import menu_options
 from src.db.database import Database
 from src.db.db_config import DBConfig
 
@@ -92,12 +92,23 @@ def generate_report_for_item(item_name):
 
 
 def main():
+    
+    import sys
+    print("sys.path:")
+    for p in sys.path:
+        print(" ", p)
+
+    import core
+    print("core location:", core.__file__)
+
     global Nutrition_Data, Users_Data
     # Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
     
     DBConfig.load_from_env()
     
     Database.initialize(DBConfig.as_dict())
+    Database.create_table_for_class(Person)
+    Users_Data = Database.select(Person)
     
     curses.wrapper(main_curses)
 

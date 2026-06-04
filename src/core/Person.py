@@ -8,16 +8,16 @@ from src.core.registries import ACTIVITY_FACTORS, ACTIVITY_LEVELS, GOALS
 
 @dataclass
 class Person:
-    user_id: int
-    name: str
-    activity_level: str
-    height_cm: int
-    age: int
-    gender: str
-    weight_kg: float
-    goal: str
-    city: str
-    loca: str
+    id: int = 0
+    name: str = ""
+    activity_level: str = ""
+    height_cm: int = 0
+    age: int = 0
+    gender: str = ""
+    weight_kg: float = 0
+    goal: str = ""
+    city: str = ""
+    loca: str = ""
 
     bmr: float = field(init=False, default=0.0)
     target_cal_per_day: float = field(init=False, default=0.0)
@@ -25,8 +25,7 @@ class Person:
     tdee: float = field(init=False, default=0.0)
 
 
-
-def random_person(user_id: int = 0, locale: str = "ru_RU") -> Person:
+def random_person(id: int = 0, locale: str = "ru_RU") -> Person:
     fake = Faker(locale)
     gender = random.choice(["мужской", "женский"])
     if gender == "мужской":
@@ -36,16 +35,16 @@ def random_person(user_id: int = 0, locale: str = "ru_RU") -> Person:
         weight = round(random.uniform(50, 100), 1)
         name = fake.name_female()
     person = Person()
-    person.user_id = (user_id,)
-    person.name = (name,)
-    person.age = (random.randint(18, 70),)
-    person.gender = (gender,)
-    person.height_cm = (random.randint(150, 195),)
-    person.weight_kg = (weight,)
-    person.goal = (random.choice(list(GOALS.values())),)
-    person.activity_level = (random.choice(list(ACTIVITY_LEVELS.values())),)
-    person.loca = (locale,)
-    person.city = (fake.city(),)
+    person.user_id = id
+    person.name = name
+    person.age = random.randint(18, 70)
+    person.gender = gender
+    person.height_cm = random.randint(150, 195)
+    person.weight_kg = weight
+    person.goal = random.choice(list(GOALS.values()))
+    person.activity_level = random.choice(list(ACTIVITY_LEVELS.values()))
+    person.loca = locale
+    person.city = fake.city()
 
     person.bmr = calculate_bmr(person.weight_kg, person.height_cm, person.age, person.gender)
     person.tdee = calculate_tdee(person.bmr, person.activity_level)
@@ -60,13 +59,14 @@ def random_person(user_id: int = 0, locale: str = "ru_RU") -> Person:
 def calculate_bmr(weight_kg, height_cm, age, gender):
     """Harris-Benedict (пересмотренный)"""
     if gender == "мужской":
-        return 88.362 + (13.397 * weight_kg) + (4.799 * height_cm) - (5.677 * age)
+        out = 88.362 + (13.397 * weight_kg) + (4.799 * height_cm) - (5.677 * age)
     else:
-        return 447.593 + (9.247 * weight_kg) + (3.098 * height_cm) - (4.330 * age)
+        out = 447.593 + (9.247 * weight_kg) + (3.098 * height_cm) - (4.330 * age)
+    return round(out, 2)
 
 
 def calculate_tdee(bmr, activity_level):
-    return bmr * ACTIVITY_FACTORS[activity_level]
+    return round(bmr * ACTIVITY_FACTORS[activity_level], 2)
 
 
 def get_target_protein_g(weight_kg, goal, activity_level):
@@ -82,7 +82,7 @@ def get_target_protein_g(weight_kg, goal, activity_level):
     elif activity_level == "умеренный":
         extra = 0.1
 
-    return weight_kg * (base + extra)
+    return round(weight_kg * (base + extra), 2)
 
 
 def get_target_calories(tdee, goal):

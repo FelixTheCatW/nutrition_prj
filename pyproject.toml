@@ -10,7 +10,7 @@ authors = [
     {name = "Ваше Имя", email = "you@example.com"}
 ]
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.14"
 dependencies = [
     # сюда перенесите библиотеки из requirements.txt, например:
     # "prettytable>=3.0",
@@ -30,11 +30,11 @@ dev = [
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py314"
 
 [tool.black]
 line-length = 100
-target-version = ['py39']
+target-version = ['py314']
 
 [tool.pytest.ini_options]
 minversion = "7.0"
@@ -42,4 +42,4 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 
 [project.scripts]
-nutrition = "cli.app:main"   # пример, если у вас в src/cli/app.py есть функция main()
+nutrition = "cli.app:main"

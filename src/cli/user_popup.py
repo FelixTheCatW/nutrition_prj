@@ -1,5 +1,5 @@
 import curses
-from core.Person import Person
+from src.core.person import Person
 
 def select_user_popup(stdscr, persons: list[Person], selected_id) -> Person:    
     max_name_len = max(len(p.name) for p in persons)

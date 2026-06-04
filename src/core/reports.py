@@ -2,8 +2,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib
 from tabulate import tabulate
-from core.Person import Person
-from core.registries import REPORT_CAPTIONS
+from src.core.person import Person
+from src.core.registries import REPORT_CAPTIONS
 
 # Настройка бэкенда для интерактивных окон (можно оставить TkAgg)
 matplotlib.use("TkAgg")
