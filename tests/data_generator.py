@@ -7,16 +7,15 @@ MEALS_BY_TYPE = {k: [] for k in MEAL_TYPE_RULES.keys()}
 
 
 def generate_meal_ext(meal_t: str, target_calories: float, user_goal: str) -> []:
-    meals_list = MEALS_BY_TYPE[meal_t]
-
+    meals_list = MEALS_BY_TYPE[meal_t]    
     # выберите 1-3 блюда с весами
     chosen_dishes = []
     remaining_kcal = target_calories * random.uniform(0.8, 1.2)
 
     while remaining_kcal > 50 and len(chosen_dishes) < 4:
-        dish = random.choices(meals_list, weights=[w[3] for w in meals_list], k=1)[0]
-        id = dish[0]
-        kcal = dish[3]
+        dish = random.choices(meals_list, weights=[w.calories for w in meals_list], k=1)[0]
+        id = dish.id
+        kcal = dish.calories
         servings = get_servings(kcal, user_goal)
         kcal_total = kcal * servings
 
@@ -24,6 +23,7 @@ def generate_meal_ext(meal_t: str, target_calories: float, user_goal: str) -> []
         remaining_kcal -= kcal_total
 
     return chosen_dishes
+
 
 
 def generate_time(meal_t: str) -> str:

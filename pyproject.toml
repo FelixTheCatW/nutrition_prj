@@ -26,6 +26,10 @@ dev = [
     "mypy",
     "psycopg2-binary",
     "dotenv",
+    "pandas",
+    "windows-curses",
+    "matplotlib",
+    "tabulate"
 ]
 
 [tool.ruff]

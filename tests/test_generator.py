@@ -85,7 +85,7 @@
 #                     for dish in dishes:
 #                         row = [
 #                             current_date.isoformat(),
-#                             person.user_id,
+#                             person.id,
 #                             person.name,
 #                             person.activity_level,
 #                             person.height_cm,

@@ -1,7 +1,7 @@
-import os
+import re
 import logging
 from contextlib import contextmanager
-from typing import Any, Type, List, Tuple, Union
+from typing import Any, Type, Union
 import dataclasses
 
 from psycopg2 import pool, Error as PGError
@@ -56,6 +56,18 @@ class Database:
         with cls.cursor(commit=commit) as cur:
             cur.execute(query, params)
             return cur.rowcount
+
+
+    @classmethod
+    def executemany(cls, query, params_list, commit=True):
+        with cls.cursor(commit=commit) as cur:
+            if "RETURNING" in query.upper():
+                raise NotImplementedError(
+                    "executemany с RETURNING не поддерживается. Используйте insert_instances."
+                )
+            else:
+                cur.executemany(query, params_list)
+                return cur.rowcount
 
     @classmethod
     def fetch_one(cls, query, params=None):
@@ -131,8 +143,13 @@ class Database:
         return mapping.get(py_type, "TEXT")
 
     @classmethod
+    def _to_snake_case(cls, name: str) -> str:
+        s1 = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
+        return re.sub("([a-z0-9])([A-Z])", r"\1_\2", s1).lower()
+
+    @classmethod
     def _table_name(cls, cls_type: Type) -> str:
-        return cls_type.__name__.lower()
+        return cls._to_snake_case(cls_type.__name__)
 
     @classmethod
     def create_table_for_class(cls, cls_type: Type) -> None:
@@ -148,7 +165,7 @@ class Database:
         for name, py_type in persistent_fields:
             sql_type = cls._py_type_to_sql(py_type)
             if name == "id":
-                columns.append(f"{name} {sql_type} PRIMARY KEY")
+                columns.append(f"{name} SERIAL PRIMARY KEY")
             else:
                 columns.append(f"{name} {sql_type}")
 
@@ -170,12 +187,30 @@ class Database:
                 has_id = True
                 continue
             data[name] = value
-
+        print(data)
         generated_id = cls.insert(table_name, data, returning="id")
         # Обновляем атрибут id у экземпляра
         if has_id:
             setattr(instance, "id", generated_id)
         return generated_id
+
+    @classmethod
+    def insert_batch(cls, instances: list[Any]) -> None:
+        if not instances:
+            return
+        cls_type = type(instances[0])
+        table_name = cls._table_name(cls_type)
+        fields = cls._get_persistent_fields(cls_type)
+        columns = [name for name, _ in fields if name != "id"]
+
+        rows = []
+        for inst in instances:
+            rows.append([getattr(inst, name) for name in columns])
+
+        placeholders = ", ".join(["%s"] * len(columns))
+        query = f"INSERT INTO {table_name} ({', '.join(columns)}) VALUES ({placeholders})"
+
+        cls.executemany(query, rows)
 
     @classmethod
     def update_instance(cls, instance: Any) -> None:
@@ -228,7 +263,7 @@ class Database:
         return instance
 
     @classmethod
-    def select(cls, cls_type: Type, where: str = None, where_params=None):
+    def select(cls, cls_type: Type, where: str = None, where_params=None) -> [Type]:
         table_name = cls._table_name(cls_type)
         persistent_fields = cls._get_persistent_fields(cls_type)
         if not persistent_fields:
@@ -240,11 +275,13 @@ class Database:
 
         columns = [name for name, _ in persistent_fields]
         select_sql = f"SELECT {', '.join(columns)} FROM {table_name} {where}"
-        row = cls.fetch_all(select_sql, (where_params,))
-        if not row:
+        rows = cls.fetch_all(select_sql, (where_params,))
+        if not rows:
             return None
-
-        instance = cls_type.__new__(cls_type)
-        for col in columns:
-            setattr(instance, col, row[col])
-        return instance
+        out = []
+        for row in rows:
+            instance = cls_type.__new__(cls_type)
+            for col in columns:
+                setattr(instance, col, row[col])
+            out.append(instance)
+        return out

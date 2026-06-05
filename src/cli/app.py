@@ -4,6 +4,7 @@ from src.cli.screen_writer import ScreenWriter, init_colors
 from src.cli.user_popup import select_user_popup
 from src.core.person import Person
 from src.core.reports import *
+from src.core.food import Food, FoodEntry
 from src.cli.menu import menu_options
 from src.db.database import Database
 from src.db.db_config import DBConfig
@@ -77,12 +78,12 @@ def main_curses(stdscr):
         elif key == curses.KEY_DOWN:
             current_idx = (current_idx + 1) % items_len
         elif key == ord("\n") or key == curses.KEY_ENTER:
-            report = menu_options[current_idx][2](Nutrition_Data, SELECTED_PERSON.user_id)
+            report = menu_options[current_idx][2](Nutrition_Data, SELECTED_PERSON.id)
             BODY_SCR.write(report)
             stdscr.refresh()
             key = stdscr.getch()
         elif key == ord("u") or key == ord("U"):
-            SELECTED_PERSON = select_user_popup(stdscr, Users_Data, SELECTED_PERSON.user_id)
+            SELECTED_PERSON = select_user_popup(stdscr, Users_Data, SELECTED_PERSON.id)
             
     curses.endwin()
 
@@ -104,10 +105,9 @@ def main():
     global Nutrition_Data, Users_Data
     # Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
     
-    DBConfig.load_from_env()
-    
+    DBConfig.load_from_env()    
     Database.initialize(DBConfig.as_dict())
-    Database.create_table_for_class(Person)
+    Nutrition_Data = Database.select(FoodEntry)
     Users_Data = Database.select(Person)
     
     curses.wrapper(main_curses)

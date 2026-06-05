@@ -14,7 +14,7 @@ class Person:
     height_cm: int = 0
     age: int = 0
     gender: str = ""
-    weight_kg: float = 0
+    weight_kg: float = 0.0
     goal: str = ""
     city: str = ""
     loca: str = ""
@@ -35,7 +35,7 @@ def random_person(id: int = 0, locale: str = "ru_RU") -> Person:
         weight = round(random.uniform(50, 100), 1)
         name = fake.name_female()
     person = Person()
-    person.user_id = id
+    person.id = id
     person.name = name
     person.age = random.randint(18, 70)
     person.gender = gender

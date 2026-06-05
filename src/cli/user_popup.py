@@ -29,7 +29,7 @@ def select_user_popup(stdscr, persons: list[Person], selected_id) -> Person:
         
         for i, person in enumerate(persons):
             y = i + 2
-            if(person.user_id == selected_id):
+            if(person.id == selected_id):
                 name = "★ " + person.name
             else:
                 name = "   " + person.name

@@ -26,12 +26,12 @@ def load_data(filepath: str) -> tuple[list[Person], pd.DataFrame]:
     df["date_only"] = df["date"].dt.date
     df["hour"] = pd.to_datetime(df["eaten_at"], format="%H:%M").dt.hour
 
-    users_df = df.groupby("user_id").first().reset_index()
+    users_df = df.groupby("id").first().reset_index()
 
     persons = []
     for _, row in users_df.iterrows():
         p = Person(
-            user_id=int(row["user_id"]),
+            user_id=int(row["id"]),
             name=row["name"],
             gender=row["gender"],
             age=int(row["age"]),
@@ -51,7 +51,7 @@ def load_data(filepath: str) -> tuple[list[Person], pd.DataFrame]:
 
 
 def get_user_list(df):
-    users = df[["user_id", "name"]].drop_duplicates().sort_values("user_id")
+    users = df[["id", "name"]].drop_duplicates().sort_values("id")
     return users
 
 
@@ -170,7 +170,7 @@ def plot_efficiency_bars(total_days, under_days, within_days, over_days):
 
 # ------------------- Функции отчётов -------------------
 def personal_statistics(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id].copy()
+    user_df = df[df["id"] == user_id].copy()
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -218,7 +218,7 @@ def personal_statistics(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def macro_analysis(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id]
+    user_df = df[df["id"] == user_id]
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -269,7 +269,7 @@ def macro_analysis(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def top_frequent_dishes(df: pd.DataFrame, user_id: int, top_n: int = 10) -> list[str]:
-    user_df = df[df["user_id"] == user_id]
+    user_df = df[df["id"] == user_id]
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -282,7 +282,7 @@ def top_frequent_dishes(df: pd.DataFrame, user_id: int, top_n: int = 10) -> list
 
 
 def top_caloric_dishes(df: pd.DataFrame, user_id: int, top_n: int = 10) -> list[str]:
-    user_df = df[df["user_id"] == user_id]
+    user_df = df[df["id"] == user_id]
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -303,19 +303,19 @@ def top_caloric_dishes(df: pd.DataFrame, user_id: int, top_n: int = 10) -> list[
 
 def compare_users(df: pd.DataFrame, user_id: int) -> list[str]:
     users = (
-        df.groupby(["user_id", "name", "target_cal_per_day", "activity_level", "gender"])
+        df.groupby(["id", "name", "target_cal_per_day", "activity_level", "gender"])
         .agg(avg_cal=("dish_calories", "mean"), total_days=("date", lambda x: x.nunique()))
         .reset_index()
     )
 
     bmi_data = (
-        df.groupby("user_id")
+        df.groupby("id")
         .agg(height=("height_cm", "first"), weight=("weight_kg", "first"))
         .reset_index()
     )
 
     users_display = users.copy()
-    users_display = users_display.merge(bmi_data, on="user_id").round(0)
+    users_display = users_display.merge(bmi_data, on="id").round(0)
 
     users_display["bmi"] = (users_display["weight"] / ((users_display["height"] / 100) ** 2)).round(
         0
@@ -352,7 +352,7 @@ def compare_users(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def meal_time_analysis(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id]
+    user_df = df[df["id"] == user_id]
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -386,7 +386,7 @@ def meal_time_analysis(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def nutrition_calendar(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id].copy()
+    user_df = df[df["id"] == user_id].copy()
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -423,7 +423,7 @@ def nutrition_calendar(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def progress_to_goal(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id].copy()
+    user_df = df[df["id"] == user_id].copy()
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
@@ -456,12 +456,12 @@ def progress_to_goal(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def overall_statistics(df: pd.DataFrame, user_id: int) -> list[str]:
-    total_users = df["user_id"].nunique()
+    total_users = df["id"].nunique()
     total_meals = len(df)
     total_dishes = df["dish_name"].nunique()
     date_range = f"{df['date'].min().date()} – {df['date'].max().date()}"
-    goals = df.groupby("user_id")["goal"].first().value_counts()
-    user_avg = df.groupby("user_id")["dish_calories"].mean().mean()
+    goals = df.groupby("id")["goal"].first().value_counts()
+    user_avg = df.groupby("id")["dish_calories"].mean().mean()
 
     out = ["=== Общая статистика ==="]
     out.append(f"Период данных: {date_range}")
@@ -476,7 +476,7 @@ def overall_statistics(df: pd.DataFrame, user_id: int) -> list[str]:
 
 
 def efficiency_report(df: pd.DataFrame, user_id: int) -> list[str]:
-    user_df = df[df["user_id"] == user_id].copy()
+    user_df = df[df["id"] == user_id].copy()
     if user_df.empty:
         return [f"Пользователь с ID {user_id} не найден."]
 
