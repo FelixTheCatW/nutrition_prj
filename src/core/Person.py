@@ -19,10 +19,10 @@ class Person:
     city: str = ""
     loca: str = ""
 
-    bmr: float = field(init=False, default=0.0)
-    target_cal_per_day: float = field(init=False, default=0.0)
-    target_protein_g: float = field(init=False, default=0.0)
-    tdee: float = field(init=False, default=0.0)
+    bmr: float = 0.0
+    target_cal_per_day: float = 0.0
+    target_protein_g: float = 0.0
+    tdee: float = 0.0
 
 
 def random_person(id: int = 0, locale: str = "ru_RU") -> Person:

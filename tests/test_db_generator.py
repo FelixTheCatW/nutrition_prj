@@ -10,7 +10,17 @@ from src.core.registries import (
     LOCALES,
     REPORT_FIELDS,
     MEAL_TYPES,
+    COUNTRIES_FOODS,
+    LOCALE_MAP,
 )
+
+def test_generate_food():
+    rows = []
+
+    for country, foods in COUNTRIES_FOODS.items():
+        for name, values in foods.items():
+            rows.append((name, LOCALE_MAP[country], *values))
+    pprint(rows)
 
 def test_registry():
     print("COUNTRIES_MEALS_BY_TYPE")
@@ -21,15 +31,6 @@ def test_registry():
     
 
 def test_generate_persons():
-    import sys
-    print("sys.path:")
-    for p in sys.path:
-        print(" ", p)
-
-    import core
-    print("core location:", core.__file__)
-    print(type(Person))
-
     persons = [random_person() for _ in range(20)]
     pprint(persons, width=100)
 
