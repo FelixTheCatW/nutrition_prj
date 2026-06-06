@@ -17,11 +17,11 @@ class DBConfig:
     def load_from_env(cls, dotenv_path=None):
         load_dotenv(dotenv_path=dotenv_path)
 
-        cls.DBNAME = os.getenv("DB_NAME")
-        cls.USER = os.getenv("DB_USER")
-        cls.PASSWORD = os.getenv("DB_PASSWORD")
-        cls.HOST = os.getenv("DB_HOST", "localhost")
-        cls.PORT = int(os.getenv("DB_PORT", 5432))
+        cls.DBNAME = os.getenv("DB_NAME") or os.getenv("PGDATABASE")
+        cls.USER = os.getenv("DB_USER") or os.getenv("PGUSER")
+        cls.PASSWORD = os.getenv("DB_PASSWORD") or os.getenv("PGPASSWORD")
+        cls.HOST = os.getenv("DB_HOST") or os.getenv("PGHOST", "localhost")
+        cls.PORT = int(os.getenv("DB_PORT") or os.getenv("PGPORT", 5432))
         cls.MIN_CONN = int(os.getenv("DB_MIN_CONN", 1))
         cls.MAX_CONN = int(os.getenv("DB_MAX_CONN", 10))
 

@@ -7,7 +7,7 @@ from src.core.registries import REPORT_CAPTIONS
 from src.db.database import Database
 
 # Настройки matplotlib (как в исходном коде)
-matplotlib.use("TkAgg")
+matplotlib.use("Agg")
 plt.rcParams["font.sans-serif"] = ["Arial", "DejaVu Sans", "Microsoft Sans Serif"]
 plt.rcParams["axes.unicode_minus"] = False
 
