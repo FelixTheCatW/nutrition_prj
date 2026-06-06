@@ -9,7 +9,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Импортируем наши модули
-from core.reports import (
+from src.core.reports import (
     load_data,
     get_user_list,
     personal_statistics,
@@ -70,7 +70,7 @@ async def user_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = int(user_id_str)
 
     # Находим объект Person
-    person = next((p for p in PERSONS_LIST if p.user_id == user_id), None)
+    person = next((p for p in PERSONS_LIST if p.id == user_id), None)
     if not person:
         await query.edit_message_text("❌ Ошибка: пользователь не найден.")
         return
@@ -85,7 +85,7 @@ async def user_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await query.edit_message_text(
-        f"✅ Выбран {person.name} (ID {person.user_id})\n\nВыбери отчёт:", reply_markup=reply_markup
+        f"✅ Выбран {person.name} (ID {person.id})\n\nВыбери отчёт:", reply_markup=reply_markup
     )
 
 
@@ -104,7 +104,7 @@ async def run_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
     report_name, report_func, has_plot = REPORTS[report_idx]
 
     # Выполняем отчёт (текстовый вывод)
-    text_lines = report_func(MEALS_DF, person.user_id)
+    text_lines = report_func(MEALS_DF, person.id)
     text_output = "\n".join(text_lines)
 
     # Если отчёт может содержать график, пытаемся его сгенерировать
@@ -124,7 +124,7 @@ async def run_report(update: Update, context: ContextTypes.DEFAULT_TYPE):
         plt.show = save_and_close
         try:
             # Вызываем функцию отчёта ещё раз, но теперь она сохранит график
-            report_func(MEALS_DF, person.user_id)
+            report_func(MEALS_DF, person.id)
         except Exception as e:
             print(f"Ошибка генерации графика: {e}")
         finally:

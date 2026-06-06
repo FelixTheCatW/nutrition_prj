@@ -1,5 +1,5 @@
 import curses
-from core.Person import Person
+from src.core.person import Person
 
 def select_user_popup(stdscr, persons: list[Person], selected_id) -> Person:    
     max_name_len = max(len(p.name) for p in persons)
@@ -29,13 +29,15 @@ def select_user_popup(stdscr, persons: list[Person], selected_id) -> Person:
         
         for i, person in enumerate(persons):
             y = i + 2
-            if(person.user_id == selected_id):
-                name = "★ " + person.name
-            else:
-                name = "   " + person.name
+            # if(person.id == selected_id):
+            #     name = "★ " + person.name
+            # else:
+            #     name = "   " + person.name
             if i == current:
+                name = "★ " + person.name
                 win.addstr(y, 2, name, curses.A_REVERSE)
             else:
+                name = "   " + person.name
                 win.addstr(y, 2, name)
 
         win.refresh()

@@ -448,7 +448,7 @@ MEAL_TYPE_RULES = {
         'сушка', 'баранка', 'семечки', 'снек', 'птифур'
     ]
 }
-MEAL_TYPES = [k for k in MEAL_TYPE_RULES]
+MEAL_TYPES = tuple(MEAL_TYPE_RULES.keys())
 
 
 # Функция, которая определяет тип приёма пищи по названию
