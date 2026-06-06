@@ -31,7 +31,9 @@ dev = [
     "matplotlib",
     "tabulate",
     "fastapi",
-    "fastapi[standard]"
+    "fastapi[standard]",
+    "gunicorn",
+    "uvicorn"
 ]
 
 [tool.ruff]

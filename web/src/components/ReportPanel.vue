@@ -595,4 +595,167 @@ const er = computed(() => {
 .flex-1 { flex: 1; min-width: 0; }
 
 .mt { margin-top: 10px; }
+
+/* ──────────────────────────────────────────────────────────
+   RESPONSIVE / MOBILE STYLES
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .rp {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .block {
+    padding: 6px 10px;
+  }
+
+  .block-title {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .mono {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .chart-wrap {
+    height: 180px;
+  }
+
+  .chart-sm {
+    height: 160px;
+  }
+
+  .chart-tall {
+    height: 200px;
+  }
+
+  /* Stack row-2 vertically on mobile */
+  .row-2 {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .flex-1 {
+    width: 100%;
+  }
+
+  .mt {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rp {
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .block {
+    padding: 5px 8px;
+  }
+
+  .block-title {
+    font-size: 9px;
+  }
+
+  .mono {
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .chart-wrap {
+    height: 150px;
+  }
+
+  .chart-sm {
+    height: 140px;
+  }
+
+  .chart-tall {
+    height: 170px;
+  }
+}
+/* ──────────────────────────────────────────────────────────
+   RESPONSIVE / MOBILE STYLES
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .rp {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .block {
+    padding: 6px 10px;
+  }
+
+  .block-title {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .mono {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .chart-wrap {
+    height: 180px;
+  }
+
+  .chart-sm {
+    height: 160px;
+  }
+
+  .chart-tall {
+    height: 200px;
+  }
+
+  /* Stack row-2 vertically on mobile */
+  .row-2 {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .flex-1 {
+    width: 100%;
+  }
+
+  .mt {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rp {
+    font-size: 14px;
+    gap: 6px;
+  }
+
+  .block {
+    padding: 5px 8px;
+  }
+
+  .block-title {
+    font-size: 14px;
+  }
+
+  .mono {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .chart-wrap {
+    height: 150px;
+  }
+
+  .chart-sm {
+    height: 140px;
+  }
+
+  .chart-tall {
+    height: 170px;
+  }
+}
 </style>
