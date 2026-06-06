@@ -12,7 +12,6 @@ from src.db.db_config import DBConfig
 TOP_LEFT_SCR: ScreenWriter
 TOP_RIGHT_SCR: ScreenWriter
 BODY_SCR: ScreenWriter
-Nutrition_Data: DataFrame
 Users_Data: list[Person]
 SELECTED_PERSON: Person = None
 
@@ -78,7 +77,7 @@ def main_curses(stdscr):
         elif key == curses.KEY_DOWN:
             current_idx = (current_idx + 1) % items_len
         elif key == ord("\n") or key == curses.KEY_ENTER:
-            report = menu_options[current_idx][2](Nutrition_Data, SELECTED_PERSON.id)
+            report = menu_options[current_idx][2](SELECTED_PERSON.id)
             BODY_SCR.write(report)
             stdscr.refresh()
             key = stdscr.getch()
@@ -92,22 +91,11 @@ def generate_report_for_item(item_name):
     pass
 
 
-def main():
-    
-    import sys
-    print("sys.path:")
-    for p in sys.path:
-        print(" ", p)
-
-    import core
-    print("core location:", core.__file__)
-
+def main():    
     global Nutrition_Data, Users_Data
-    # Users_Data, Nutrition_Data = load_data("data/nutrition_data.csv")
     
     DBConfig.load_from_env()    
-    Database.initialize(DBConfig.as_dict())
-    Nutrition_Data = Database.select(FoodEntry)
+    Database.initialize(DBConfig.as_dict())    
     Users_Data = Database.select(Person)
     
     curses.wrapper(main_curses)

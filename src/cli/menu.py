@@ -67,8 +67,7 @@ menu_options = [
     ),
 ]
 
-# Для удобства можно также создать отдельные списки названий и описаний,
-# извлекая их из кортежей:
+
 MENU_ITEMS = [item[0] for item in menu_options]
 MENU_DESC = [item[1] for item in menu_options]
 MENU_ACTIONS = [item[2] for item in menu_options]
