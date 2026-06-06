@@ -1,203 +1,413 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine
 } from 'recharts';
 
+// ── Xterm-256 colors extracted from CLI source ─────────────────────────────
+// curses.init_pair(N, N-1, -1)  → pair 171 = color 170, pair 140 = color 139, pair 99 = color 98
+// Color 170 → #d75fd7 (orchid / bright purple)  — headers, borders, window bg
+// Color 139 → #af87af (muted mauve / lilac)      — active/highlighted menu item
+// Color 98  → #875fd7 (blue-violet)              — user info bar
+
+const C = {
+  bg:          '#0c0a12',   // near-black with purple tint
+  panelBg:     '#120d1e',   // slightly lighter panel
+  border:      '#3d1f5e',   // dark purple border
+  primary:     '#d75fd7',   // pair 171 — orchid
+  active:      '#af87af',   // pair 140 — muted mauve (active menu item)
+  userBar:     '#875fd7',   // pair 98  — blue-violet (user bar)
+  dim:         '#8b6fa8',   // dim text
+  white:       '#e8d8f0',   // near-white with purple tint
+  activeBg:    '#2a1040',   // active menu item bg
+  hoverBg:     '#1e0d30',   // hover bg
+  headerBg:    '#1a0b2e',   // header/footer bar bg
+  chartBar:    '#d75fd7',   // chart bar color
+  chartRef:    '#af87af',   // reference line
+  chartGrid:   '#2a1040',   // chart grid
+};
+
 const MENU_ITEMS = [
-  { id: 1, key: '1', title: 'Personal Statistics' },
-  { id: 2, key: '2', title: 'Macro Analysis' },
-  { id: 3, key: '3', title: 'Top Frequent Dishes' },
-  { id: 4, key: '4', title: 'Top Caloric Dishes' },
-  { id: 5, key: '5', title: 'Compare Users' },
-  { id: 6, key: '6', title: 'Meal Time Analysis' },
-  { id: 7, key: '7', title: 'Nutrition Calendar' },
-  { id: 8, key: '8', title: 'Progress to Goal' },
-  { id: 9, key: '9', title: 'Overall Statistics' },
-  { id: 10, key: '0', title: 'Efficiency Report' },
+  { id: 1,  key: '1', title: 'Персональная статистика',   desc: 'Суммарное потребление калорий и БЖУ, сравнение с целью, динамика по дням.' },
+  { id: 2,  key: '2', title: 'Анализ макронутриентов',    desc: 'Соотношение белков, жиров, углеводов в процентах от калорий, сравнение с нормой.' },
+  { id: 3,  key: '3', title: 'Топ блюд по частоте',       desc: 'Список блюд, которые пользователь заказывает чаще всего (по количеству приемов).' },
+  { id: 4,  key: '4', title: 'Топ блюд по калориям',      desc: 'Самые калорийные блюда в рационе (средняя калорийность за прием).' },
+  { id: 5,  key: '5', title: 'Сравнение пользователей',   desc: 'Сводная таблица по всем пользователям: ИМТ, активность, среднее отклонение от нормы.' },
+  { id: 6,  key: '6', title: 'Анализ приемов по времени', desc: 'Средняя калорийность завтрака, обеда, ужина, перекусов; поздние приемы пищи.' },
+  { id: 7,  key: '7', title: 'Календарь питания',         desc: 'Тепловая карта калорий по дням месяца, выделение дней с сильным превышением.' },
+  { id: 8,  key: '8', title: 'Прогресс к цели',           desc: 'Прогноз изменения веса на основе дефицита/профицита калорий.' },
+  { id: 9,  key: '9', title: 'Общая статистика',          desc: 'Количество приемов, общее потребление по всем пользователям, распределение целей.' },
+  { id: 10, key: '0', title: 'Отчет по эффективности',    desc: 'Процент дней, когда калорийность в пределах ±10% от цели, пропуски приемов.' },
+];
+
+const USERS = [
+  'Евфросиния Геннадиевна Носкова',
+  'Смирнова Раиса Валериевна',
+  'Титов Святослав Иосипович',
+  'Самсон Аксёнович Евсеев',
+  'Маслова Вера Богдановна',
+  'Вера Даниловна Михайлова',
+  'Ювеналий Елизарович Игнатьев',
+  'Куликов Кирилл Абрамович',
+  'Кирилл Филатович Козлов',
+  'Наина Вадимовна Устинова',
 ];
 
 const CHART_DATA = [
-  { date: '06-01', calories: 2150, protein: 140, fat: 65, carbs: 250 },
-  { date: '06-02', calories: 1980, protein: 135, fat: 55, carbs: 230 },
-  { date: '06-03', calories: 2400, protein: 160, fat: 80, carbs: 260 },
-  { date: '06-04', calories: 2100, protein: 145, fat: 60, carbs: 245 },
-  { date: '06-05', calories: 2250, protein: 150, fat: 70, carbs: 255 },
-  { date: '06-06', calories: 2050, protein: 130, fat: 58, carbs: 250 },
-  { date: '06-07', calories: 2300, protein: 155, fat: 75, carbs: 250 },
+  { date: '06-01', calories: 2150 },
+  { date: '06-02', calories: 1980 },
+  { date: '06-03', calories: 2400 },
+  { date: '06-04', calories: 2100 },
+  { date: '06-05', calories: 2250 },
+  { date: '06-06', calories: 2050 },
+  { date: '06-07', calories: 2300 },
 ];
 
-export function NutritionApp() {
-  const [activeId, setActiveId] = useState(1);
+// ── User Selection Modal ───────────────────────────────────────────────────
+function UserModal({ currentUser, onSelect, onClose }: {
+  currentUser: string;
+  onSelect: (u: string) => void;
+  onClose: () => void;
+}) {
+  const [cursor, setCursor] = useState(USERS.indexOf(currentUser));
+  const listRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = listRef.current?.children[cursor] as HTMLElement;
+    el?.scrollIntoView({ block: 'nearest' });
+  }, [cursor]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp')   { e.preventDefault(); setCursor(c => Math.max(0, c - 1)); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); setCursor(c => Math.min(USERS.length - 1, c + 1)); }
+      if (e.key === 'Enter')     { onSelect(USERS[cursor]); }
+      if (e.key === 'Escape')    { onClose(); }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [cursor, onSelect, onClose]);
 
   return (
     <div
-      className="flex flex-col w-screen h-screen font-mono overflow-hidden select-none"
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: 'rgba(12,10,18,0.85)' }}
+      onClick={onClose}
+    >
+      <div
+        className="flex flex-col"
+        style={{
+          backgroundColor: C.panelBg,
+          border: `2px solid ${C.primary}`,
+          minWidth: 420,
+          maxWidth: 520,
+          fontFamily: "'Courier New', Consolas, monospace",
+          boxShadow: `0 0 40px ${C.primary}55`,
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Modal title bar */}
+        <div
+          className="px-4 py-2 text-center font-bold tracking-widest"
+          style={{ backgroundColor: C.primary, color: C.bg, fontSize: 13 }}
+        >
+          ╔══ ВЫБЕРИТЕ ПОЛЬЗОВАТЕЛЯ ══╗
+        </div>
+
+        {/* User list */}
+        <div
+          ref={listRef}
+          className="overflow-y-auto"
+          style={{ maxHeight: 320, backgroundColor: C.panelBg }}
+        >
+          {USERS.map((u, i) => (
+            <div
+              key={u}
+              onClick={() => onSelect(u)}
+              onMouseEnter={() => setCursor(i)}
+              className="px-6 py-2 cursor-pointer"
+              style={{
+                backgroundColor: i === cursor ? C.primary : 'transparent',
+                color:           i === cursor ? C.bg      : C.primary,
+                fontSize: 13,
+              }}
+            >
+              {i === cursor ? `  ★ ${u}  ` : `     ${u}`}
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div
+          className="px-4 py-1 text-center"
+          style={{ backgroundColor: C.headerBg, color: C.dim, fontSize: 11, borderTop: `1px solid ${C.border}` }}
+        >
+          [↑↓] навигация  [Enter] выбрать  [Esc] отмена
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ───────────────────────────────────────────────────────────────
+export function NutritionApp() {
+  const [activeId, setActiveId]       = useState(1);
+  const [user, setUser]               = useState(USERS[0]);
+  const [showModal, setShowModal]     = useState(false);
+
+  const activeItem = MENU_ITEMS.find(m => m.id === activeId)!;
+
+  // Global keyboard handler
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (showModal) return;
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowUp')   setActiveId(id => Math.max(1,  id - 1));
+      if (e.key === 'ArrowDown') setActiveId(id => Math.min(10, id + 1));
+      if (e.key === 'u' || e.key === 'U') setShowModal(true);
+      if (e.key === 'q' || e.key === 'Q') { /* quit — noop in browser */ }
+      const num = parseInt(e.key);
+      if (!isNaN(num)) setActiveId(num === 0 ? 10 : num);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showModal]);
+
+  return (
+    <div
+      className="flex flex-col w-screen h-screen overflow-hidden select-none"
       style={{
-        backgroundColor: '#0a0a0f',
-        color: '#22c55e',
-        fontFamily: "'Courier New', 'Fira Code', 'JetBrains Mono', Consolas, monospace",
+        backgroundColor: C.bg,
+        color: C.primary,
+        fontFamily: "'Courier New', 'Fira Code', Consolas, monospace",
+        fontSize: 13,
       }}
     >
       <style dangerouslySetInnerHTML={{__html: `
-        ::-webkit-scrollbar {
-          width: 12px;
-          background: #0a0a0f;
-          border-left: 1px solid #1e3a1e;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #1e3a1e;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #22c55e;
-        }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 8px; background: ${C.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${C.border}; }
+        ::-webkit-scrollbar-thumb:hover { background: ${C.primary}; }
       `}} />
 
-      {/* TOP BAR */}
+      {/* ── TOP BAR ─────────────────────────────────────────────────── */}
       <div
-        className="flex justify-between items-center px-4 py-1 shrink-0"
-        style={{ backgroundColor: '#052e16', borderBottom: '1px solid #1e3a1e' }}
+        className="flex items-center justify-between px-3 py-1 shrink-0"
+        style={{ backgroundColor: C.headerBg, borderBottom: `1px solid ${C.border}`, minHeight: 28 }}
       >
-        <div>NUTRITION TRACKER v1.0 | USER: Евфросиния Геннадиевна Носкова | 2025-06-06</div>
-        <div className="flex gap-4">
-          <span>[F1] Help</span>
-          <span>[F2] Reports</span>
-          <span>[F10] Quit</span>
-        </div>
+        <span style={{ color: C.primary, letterSpacing: '0.04em' }}>
+          NUTRITION TRACKER v1.0
+        </span>
+        <span style={{ color: C.white }}>
+          Клиент:{' '}
+          <span style={{ color: C.userBar, fontWeight: 'bold' }}>{user}</span>
+          {'  '}| 2025-06-06
+        </span>
+        <span style={{ color: C.dim }}>
+          [U] Выбор пользователя  [Q] Выход
+        </span>
       </div>
 
-      {/* SPLIT */}
+      {/* ── SPLIT AREA ──────────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT PANEL */}
+
+        {/* LEFT PANEL — menu ─────────────────────────────────────── */}
         <div
-          className="w-1/4 flex flex-col shrink-0"
-          style={{ backgroundColor: '#0d1117', borderRight: '1px solid #1e3a1e' }}
+          className="flex flex-col shrink-0"
+          style={{ width: 240, backgroundColor: C.panelBg, borderRight: `1px solid ${C.border}` }}
         >
-          <div className="p-4 uppercase font-bold border-b" style={{ borderColor: '#1e3a1e', color: '#bbf7d0' }}>
-            Available Reports
+          {/* Panel header */}
+          <div
+            className="px-3 py-1 text-center font-bold tracking-wider shrink-0"
+            style={{ backgroundColor: C.primary, color: C.bg, fontSize: 12 }}
+          >
+            ═══ Доступные отчеты ═══
           </div>
-          <div className="flex-1 overflow-y-auto py-2">
-            {MENU_ITEMS.map((item) => {
+
+          {/* Menu list */}
+          <div className="flex-1 overflow-y-auto py-1">
+            {MENU_ITEMS.map(item => {
               const isActive = item.id === activeId;
               return (
                 <div
                   key={item.id}
                   onClick={() => setActiveId(item.id)}
-                  className="px-4 py-2 flex items-center cursor-pointer transition-colors duration-0"
+                  className="flex items-center px-2 py-1 cursor-pointer"
                   style={{
-                    backgroundColor: isActive ? '#1a2e1a' : 'transparent',
-                    color: isActive ? '#fbbf24' : '#22c55e'
+                    backgroundColor: isActive ? C.activeBg : 'transparent',
+                    color: isActive ? C.active : C.primary,
+                    borderLeft: isActive ? `3px solid ${C.active}` : '3px solid transparent',
+                    transition: 'none',
                   }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = '#1a2e1a';
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) e.currentTarget.style.backgroundColor = 'transparent';
-                  }}
+                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.backgroundColor = C.hoverBg; }}
+                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.backgroundColor = 'transparent'; }}
                 >
-                  <span className="w-6 shrink-0">{isActive ? '►' : ' '}</span>
-                  <span className="w-8 shrink-0">[{item.key}]</span>
-                  <span className="truncate">{item.title}</span>
+                  <span style={{ width: 14, color: C.active }}>{isActive ? '►' : ' '}</span>
+                  <span style={{ width: 22, color: C.dim, flexShrink: 0 }}>[{item.key}]</span>
+                  <span style={{ fontSize: 12 }}>{item.title}</span>
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* RIGHT PANEL */}
-        <div className="w-3/4 flex flex-col flex-1" style={{ backgroundColor: '#111827' }}>
-          {/* DESCRIPTION PANEL */}
+        {/* RIGHT PANEL ──────────────────────────────────────────── */}
+        <div className="flex flex-col flex-1 overflow-hidden" style={{ backgroundColor: C.bg }}>
+
+          {/* Description bar */}
           <div
-            className="p-4 shrink-0"
+            className="px-4 py-2 shrink-0"
             style={{
-              backgroundColor: '#0d1117',
-              borderBottom: '1px solid #1e3a1e',
-              minHeight: '80px'
+              backgroundColor: C.panelBg,
+              borderBottom: `1px solid ${C.border}`,
+              minHeight: 62,
             }}
           >
-            <div style={{ color: '#4ade80' }} className="italic whitespace-pre-wrap">
-              {activeId === 1
-                ? "Displays your personal nutrition summary including daily averages, macronutrient breakdown, and calorie history vs. targets over the selected period."
-                : "Description not available for this report."}
+            <div style={{ color: C.dim, fontSize: 11, marginBottom: 2 }}>
+              ═══ Описание ═══════════════════════════════════════════════
+            </div>
+            <div style={{ color: C.white, fontStyle: 'italic', fontSize: 13 }}>
+              {activeItem.desc}
             </div>
           </div>
 
-          {/* BODY / REPORT CONTENT */}
-          <div className="p-6 flex-1 overflow-y-auto flex flex-col gap-6">
-            {/* SUMMARY STATS */}
-            <div className="border border-dashed p-4" style={{ borderColor: '#1e3a1e', backgroundColor: '#0a0a0f' }}>
-              <pre className="m-0 leading-relaxed" style={{ color: '#bbf7d0' }}>
-{`REPORT:     Personal Statistics
-PERIOD:     2025-06-01 to 2025-06-07 (7 days)
-TARGET:     2200 kcal/day
+          {/* Report body */}
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
 
-DAILY AVERAGES
---------------
-Calories:   2175 kcal (Target Dev: -1.1%)
-Protein:    145g
-Fat:        66g
-Carbs:      248g`}
-              </pre>
+            {/* Stats block */}
+            <div
+              className="p-3"
+              style={{ border: `1px solid ${C.border}`, backgroundColor: C.panelBg }}
+            >
+              <div style={{ color: C.active, marginBottom: 6, fontSize: 11 }}>
+                ┌── ПЕРСОНАЛЬНАЯ СТАТИСТИКА ─────────────────────────────────────┐
+              </div>
+              <pre style={{ margin: 0, lineHeight: 1.7, color: C.white, fontSize: 13 }}>{`ПЕРИОД:           2025-06-01 → 2025-06-07 (7 дней)
+ЦЕЛЬ КАЛОРИЙ:     2 200 ккал/день
+
+СРЕДНЕСУТОЧНО
+  Калории:        2 175 ккал   (отклонение: −25 ккал / −1.1%)
+  Белки:          145 г
+  Жиры:            66 г
+  Углеводы:       248 г`}</pre>
+              <div style={{ color: C.active, marginTop: 6, fontSize: 11 }}>
+                └────────────────────────────────────────────────────────────────┘
+              </div>
             </div>
 
-            {/* CHART */}
-            <div className="border p-4 flex flex-col gap-2" style={{ borderColor: '#1e3a1e', backgroundColor: '#0a0a0f' }}>
-              <div className="text-center font-bold" style={{ color: '#4ade80' }}>-- 7-DAY CALORIE HISTORY --</div>
-              <div className="h-64 w-full mt-4">
+            {/* Chart */}
+            <div
+              className="p-3"
+              style={{ border: `1px solid ${C.border}`, backgroundColor: C.panelBg }}
+            >
+              <div
+                className="text-center mb-3"
+                style={{ color: C.active, fontSize: 11, letterSpacing: '0.1em' }}
+              >
+                ─────────── ИСТОРИЯ КАЛОРИЙ (7 ДНЕЙ) ───────────
+              </div>
+              <div style={{ height: 200 }}>
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={CHART_DATA} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e3a1e" vertical={false} />
-                    <XAxis dataKey="date" stroke="#22c55e" tick={{ fill: '#22c55e', fontSize: 12, fontFamily: 'monospace' }} axisLine={{ stroke: '#1e3a1e' }} tickLine={false} />
-                    <YAxis stroke="#22c55e" tick={{ fill: '#22c55e', fontSize: 12, fontFamily: 'monospace' }} axisLine={{ stroke: '#1e3a1e' }} tickLine={false} />
-                    <Tooltip
-                      cursor={{ fill: '#1a2e1a' }}
-                      contentStyle={{ backgroundColor: '#0d1117', border: '1px solid #1e3a1e', color: '#bbf7d0', fontFamily: 'monospace' }}
-                      itemStyle={{ color: '#22c55e' }}
+                  <BarChart data={CHART_DATA} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="2 4" stroke={C.chartGrid} vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      stroke={C.border}
+                      tick={{ fill: C.dim, fontSize: 11, fontFamily: 'monospace' }}
+                      axisLine={{ stroke: C.border }}
+                      tickLine={false}
                     />
-                    <ReferenceLine y={2200} stroke="#fbbf24" strokeDasharray="3 3" label={{ position: 'top', value: 'TARGET', fill: '#fbbf24', fontSize: 10, fontFamily: 'monospace' }} />
-                    <Bar dataKey="calories" fill="#22c55e" radius={[2, 2, 0, 0]} maxBarSize={50} />
+                    <YAxis
+                      stroke={C.border}
+                      tick={{ fill: C.dim, fontSize: 11, fontFamily: 'monospace' }}
+                      axisLine={{ stroke: C.border }}
+                      tickLine={false}
+                      domain={[1600, 2600]}
+                    />
+                    <Tooltip
+                      cursor={{ fill: C.hoverBg }}
+                      contentStyle={{
+                        backgroundColor: C.panelBg,
+                        border: `1px solid ${C.border}`,
+                        color: C.white,
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      }}
+                      itemStyle={{ color: C.primary }}
+                      labelStyle={{ color: C.active }}
+                    />
+                    <ReferenceLine
+                      y={2200}
+                      stroke={C.chartRef}
+                      strokeDasharray="4 3"
+                      label={{ position: 'right', value: 'ЦЕЛЬ', fill: C.chartRef, fontSize: 10, fontFamily: 'monospace' }}
+                    />
+                    <Bar dataKey="calories" fill={C.chartBar} radius={[2, 2, 0, 0]} maxBarSize={42} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* DATA TABLE */}
-            <div>
-              <pre className="w-full whitespace-pre font-mono text-sm leading-tight border p-4" style={{ borderColor: '#1e3a1e', backgroundColor: '#0a0a0f', color: '#22c55e' }}>
-{`DATE       | CALORIES | PROTEIN | FAT  | CARBS
------------+----------+---------+------+------
-2025-06-01 |     2150 |     140 |   65 |   250
-2025-06-02 |     1980 |     135 |   55 |   230
-2025-06-03 |     2400 |     160 |   80 |   260
-2025-06-04 |     2100 |     145 |   60 |   245
-2025-06-05 |     2250 |     150 |   70 |   255
-2025-06-06 |     2050 |     130 |   58 |   250
-2025-06-07 |     2300 |     155 |   75 |   250
------------+----------+---------+------+------
-AVERAGE    |     2175 |     145 |   66 |   248`}
+            {/* Data table */}
+            <div style={{ border: `1px solid ${C.border}`, backgroundColor: C.panelBg }}>
+              <pre
+                style={{
+                  margin: 0, padding: '10px 12px',
+                  fontSize: 12, lineHeight: 1.6,
+                  color: C.primary,
+                  fontFamily: "'Courier New', Consolas, monospace",
+                }}
+              >{`ДАТА       │ КАЛОРИИ │ БЕЛКИ │ ЖИРЫ │ УГЛЕВ.
+───────────┼─────────┼───────┼──────┼───────
+2025-06-01 │   2 150 │   140 │   65 │   250
+2025-06-02 │   1 980 │   135 │   55 │   230
+2025-06-03 │   2 400 │   160 │   80 │   260
+2025-06-04 │   2 100 │   145 │   60 │   245
+2025-06-05 │   2 250 │   150 │   70 │   255
+2025-06-06 │   2 050 │   130 │   58 │   250
+2025-06-07 │   2 300 │   155 │   75 │   250
+───────────┼─────────┼───────┼──────┼───────`}
+                <span style={{ color: C.active }}>{`
+СРЕДНЕЕ    │   2 175 │   145 │   66 │   248`}</span>
               </pre>
             </div>
+
           </div>
         </div>
       </div>
 
-      {/* BOTTOM BAR */}
+      {/* ── BOTTOM BAR ──────────────────────────────────────────────── */}
       <div
-        className="px-4 py-1 shrink-0 flex justify-center gap-6"
-        style={{ backgroundColor: '#052e16', borderTop: '1px solid #1e3a1e' }}
+        className="flex items-center justify-center gap-6 px-4 py-1 shrink-0"
+        style={{
+          backgroundColor: C.headerBg,
+          borderTop: `1px solid ${C.border}`,
+          color: C.primary,
+          fontSize: 12,
+          minHeight: 26,
+        }}
       >
-        <span>[↑↓] Navigate</span>
-        <span>[Enter] Run Report</span>
-        <span>[R] Refresh</span>
-        <span>[Q] Quit</span>
-        <span>[Tab] Next User</span>
+        <span style={{ color: C.dim }}>[↑↓]</span> Навигация
+        <span style={{ color: C.dim }}> │ </span>
+        <span style={{ color: C.dim }}>[Enter]</span> Запустить отчет
+        <span style={{ color: C.dim }}> │ </span>
+        <span style={{ color: C.dim }}>[U]</span> <span style={{ color: C.userBar }}>Выбор пользователя</span>
+        <span style={{ color: C.dim }}> │ </span>
+        <span style={{ color: C.dim }}>[1–0]</span> Быстрый переход
+        <span style={{ color: C.dim }}> │ </span>
+        <span style={{ color: C.dim }}>[Q]</span> Выход
       </div>
+
+      {/* ── USER MODAL ──────────────────────────────────────────────── */}
+      {showModal && (
+        <UserModal
+          currentUser={user}
+          onSelect={u => { setUser(u); setShowModal(false); }}
+          onClose={() => setShowModal(false)}
+        />
+      )}
     </div>
   );
 }
