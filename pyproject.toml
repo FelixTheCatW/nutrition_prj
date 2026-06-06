@@ -29,7 +29,9 @@ dev = [
     "pandas",
     "windows-curses",
     "matplotlib",
-    "tabulate"
+    "tabulate",
+    "fastapi",
+    "fastapi[standard]"
 ]
 
 [tool.ruff]

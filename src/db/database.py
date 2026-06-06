@@ -101,29 +101,21 @@ class Database:
 
     @classmethod
     def _get_persistent_fields(cls, cls_type: Type) -> list[tuple[str, Type]]:
-        """
-        Возвращает список (имя_поля, тип_python) полей, которые должны сохраняться в БД.
-        Для dataclass исключаются поля с init=False.
-        Для обычных классов используются аннотации типов (__annotations__).
-        """
         if dataclasses.is_dataclass(cls_type):
             persistent = []
             for f in dataclasses.fields(cls_type):
                 if f.init:
                     persistent.append((f.name, f.type))
             return persistent
-        else:
-            # обычный класс – берём аннотации
+        else:            
             hints = getattr(cls_type, "__annotations__", {})
             return [(name, typ) for name, typ in hints.items() if not name.startswith("_")]
 
     @classmethod
-    def _py_type_to_sql(cls, py_type: Type) -> str:
-        """Преобразует Python-тип в SQL-тип PostgreSQL."""
+    def _py_type_to_sql(cls, py_type: Type) -> str:        
         # Обработка Optional / Union
         origin = getattr(py_type, "__origin__", None)
-        if origin is Union:
-            # Исключаем None и берём первый не-None тип
+        if origin is Union:            
             args = [a for a in py_type.__args__ if a is not type(None)]
             if args:
                 py_type = args[0]
@@ -214,10 +206,6 @@ class Database:
 
     @classmethod
     def update_instance(cls, instance: Any) -> None:
-        """
-        Обновляет запись в БД, соответствующую данному экземпляру, по полю id.
-        Поле id не изменяется.
-        """
         cls_type = type(instance)
         table_name = cls._table_name(cls_type)
         fields = cls._get_persistent_fields(cls_type)
