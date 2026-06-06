@@ -1,10 +1,8 @@
 import curses
-from pandas import DataFrame
 from src.cli.screen_writer import ScreenWriter, init_colors
 from src.cli.user_popup import select_user_popup
 from src.core.person import Person
 from src.core.reports import *
-from src.core.food import Food, FoodEntry
 from src.cli.menu import menu_options
 from src.db.database import Database
 from src.db.db_config import DBConfig
