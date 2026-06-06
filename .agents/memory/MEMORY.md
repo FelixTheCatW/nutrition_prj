@@ -1,0 +1,1 @@
+- [Web App architecture](web-app-arch.md) — FastAPI on 8080 + Vite Vue3 on 5000; start_web.sh starts both; workflow "Web App" waitForPort:5000 webview.
